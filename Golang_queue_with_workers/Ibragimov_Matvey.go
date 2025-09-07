@@ -161,7 +161,6 @@ func main() {
 		}
 		close(chan_job)
 		wg.Wait()
-		log.Println("Server exited gracefully")
 	}()
 
 	fmt.Println("localhost :8080 is started")
@@ -169,5 +168,5 @@ func main() {
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Could`t listen: %v\n", err)
 	}
-
+	log.Println("Server exited gracefully")
 }
