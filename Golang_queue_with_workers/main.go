@@ -25,6 +25,7 @@ type Json_job struct {
 type Json_job_status struct {
 	Attempts int
 	Status   string
+	mu       sync.Mutex
 }
 
 var chan_job chan Json_job
@@ -83,26 +84,33 @@ func processJob(worker_id int, job_chan Json_job) {
 		status = &Json_job_status{}
 		job_status.Store(job_chan.Id, status)
 	}
+	status.mu.Lock()
 	status.Status = "running"
+	status.mu.Unlock()
 
 	for {
 		workTime := time.Duration(rand.Intn(400)+100) * time.Millisecond
 		time.Sleep(workTime)
 		if rand.Float32() < 0.2 {
+			status.mu.Lock()
 			status.Attempts++
 			if status.Attempts > job_chan.Max_retries {
 				status.Status = "failed"
 				log.Printf("[Worker: %d] job %s Failed after %d attempts", worker_id, job_chan.Id, status.Attempts)
+				status.mu.Unlock()
 				return
 			}
 			backoff := Backoff_with_jitter(status.Attempts)
 			log.Printf("[Worker: %d] job %s Failed, retrying in %v [Attempt: %d]", worker_id, job_chan.Id, backoff, status.Attempts)
+			status.mu.Unlock()
 			time.Sleep(backoff)
 			continue
 		}
+		status.mu.Lock()
 		status.Attempts++
 		status.Status = "done"
 		log.Printf("[Worker: %d] job %s Done after %d attempts", worker_id, job_chan.Id, status.Attempts)
+		status.mu.Unlock()
 		return
 	}
 
@@ -117,7 +125,8 @@ func queueHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(http.StatusBadRequest)
 		return
 	}
-	job_status.Store(job.Id, &Json_job_status{Attempts: 0, Status: "queued"})
+	status := &Json_job_status{Attempts: 0, Status: "queued"}
+	job_status.Store(job.Id, status)
 
 	select {
 	case chan_job <- job:
