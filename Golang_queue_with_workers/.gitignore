@@ -1,0 +1,65 @@
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build directories
+build/
+dist/
+out/
+
+# Compiled binaries
+*.exe
+*.out
+*.so
+*.dll
+*.dylib
+*.test
+*.o
+*.a
+*.lib
+*.dSYM/
+
+# Coverage files
+*.gcov
+*.gcno
+*.gcda
+coverage/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Cache
+.cache/
+*.cache
