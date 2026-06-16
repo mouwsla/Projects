@@ -1,0 +1,127 @@
+{
+  "weather_provider": {
+    "name": "Gismeteo API adapter sample",
+    "mode": "offline-normalized-demo",
+    "attribution": "Synthetic sample shaped as if converted from a forecast provider response",
+    "updated_at": "2026-05-22T11:00:00Z"
+  },
+  "base_map": {
+    "type": "SXF",
+    "path": "maps/demo_airspace.sxf",
+    "projection": "EPSG:4326"
+  },
+  "route_corridor_nm": 25,
+  "aircraft": {
+    "type": "C172",
+    "icing_equipped": false,
+    "max_crosswind_kt": 15,
+    "max_tailwind_kt": 10,
+    "turbulence_sensitivity": 1.2
+  },
+  "route": {
+    "callsign": "RA-TEST",
+    "cruise_speed_kt": 110,
+    "waypoints": [
+      {
+        "name": "UUEE",
+        "lat": 55.9726,
+        "lon": 37.4146,
+        "altitude_ft": 0,
+        "eta_min": 0
+      },
+      {
+        "name": "BORKI",
+        "lat": 56.20,
+        "lon": 38.10,
+        "altitude_ft": 6500,
+        "eta_min": 25
+      },
+      {
+        "name": "UUOB",
+        "lat": 56.7020,
+        "lon": 37.5300,
+        "altitude_ft": 0,
+        "eta_min": 70
+      }
+    ]
+  },
+  "hazards": [
+    {
+      "id": "SIGMET-TS-01",
+      "type": "thunderstorm",
+      "severity": "severe",
+      "base_ft": 1500,
+      "top_ft": 38000,
+      "valid_from_min": 0,
+      "valid_to_min": 90,
+      "confidence": 0.92,
+      "description": "Embedded CB line moving east at 20 kt.",
+      "polygon": [
+        {"lat": 56.03, "lon": 37.75},
+        {"lat": 56.10, "lon": 38.42},
+        {"lat": 56.46, "lon": 38.20},
+        {"lat": 56.38, "lon": 37.65}
+      ]
+    },
+    {
+      "id": "AIRMET-ICE-02",
+      "type": "icing",
+      "severity": "moderate",
+      "base_ft": 4000,
+      "top_ft": 9000,
+      "valid_from_min": 10,
+      "valid_to_min": 80,
+      "confidence": 0.8,
+      "description": "Freezing layer with supercooled cloud tops near the planned cruise altitude.",
+      "polygon": [
+        {"lat": 55.80, "lon": 37.10},
+        {"lat": 56.35, "lon": 37.20},
+        {"lat": 56.45, "lon": 38.30},
+        {"lat": 55.90, "lon": 38.55}
+      ]
+    },
+    {
+      "id": "TURB-LL-03",
+      "type": "turbulence",
+      "severity": "moderate",
+      "base_ft": 0,
+      "top_ft": 5000,
+      "valid_from_min": 45,
+      "valid_to_min": 100,
+      "confidence": 0.7,
+      "description": "Mechanical turbulence expected below 5000 ft near arrival terrain.",
+      "polygon": [
+        {"lat": 56.45, "lon": 37.10},
+        {"lat": 56.88, "lon": 37.12},
+        {"lat": 56.86, "lon": 37.92},
+        {"lat": 56.42, "lon": 37.82}
+      ]
+    }
+  ],
+  "airports": [
+    {
+      "icao": "UUEE",
+      "visibility_m": 6000,
+      "ceiling_ft": 1700,
+      "wind_dir_deg": 210,
+      "wind_speed_kt": 13,
+      "gust_kt": 20,
+      "runways": [
+        {"id": "06L", "heading_deg": 60},
+        {"id": "24R", "heading_deg": 240}
+      ]
+    },
+    {
+      "icao": "UUOB",
+      "visibility_m": 4200,
+      "ceiling_ft": 850,
+      "wind_dir_deg": 270,
+      "wind_speed_kt": 18,
+      "gust_kt": 27,
+      "runways": [
+        {"id": "07", "heading_deg": 70},
+        {"id": "25", "heading_deg": 250}
+      ]
+    }
+  ]
+}
