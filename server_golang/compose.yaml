@@ -1,0 +1,10 @@
+services:
+  map-server:
+    build: .
+    container_name: aurora-map-server
+
+    ports: 
+      - "8080:8080"
+    volumes:
+      - ./maps:/app/maps:ro
+    restart: unless-stopped

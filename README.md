@@ -1,6 +1,6 @@
 # C, C++ и Go — коллекция проектов
 
-13 самостоятельных проектов: библиотеки на C и C++, терминальные игры, визуализация, HTTP-сервисы на Go и погодное приложение с картой на Qt.
+14 самостоятельных проектов: библиотеки на C и C++, терминальные игры, визуализация, HTTP-сервисы на Go и погодное приложение с картой на Qt.
 
 В репозитории собраны учебные задания и собственные эксперименты с памятью, алгоритмами, конкурентностью, сетевыми запросами и графическими интерфейсами. У каждого проекта свои исходники и способ сборки.
 
@@ -10,6 +10,7 @@
 
 | Проект | Что внутри | Стек |
 | --- | --- | --- |
+| [Map Server](server_golang/) | HTTP-сервер PNG-тайлов из двух MBTiles-баз, метаданные карт и graceful shutdown | Go, `net/http`, SQLite, Docker |
 | [Weather Server](server_golang_weather/) | HTTP API: поиск города и текущая температура, влажность, ветер и давление через Open-Meteo | Go, `net/http`, JSON |
 | [Очередь задач](Golang_queue_with_workers/) | Буферизированная очередь, пул воркеров, повторные попытки с задержкой и случайным разбросом | Go, goroutines, channels, `sync` |
 | [AviWx](weather_prog/) | Анализ погодных рисков по сценарию маршрута, Qt-интерфейс, прогноз Open-Meteo и SXF-карты | C++20, CMake, Qt6, GDAL |
@@ -40,7 +41,8 @@
 | Тесты s21_matrixplus | GoogleTest |
 | AviWx: консоль и тесты | CMake 3.20+; при сборке через Makefile — `make` |
 | AviWx: интерфейс и SXF-карты | Qt6 Widgets + Network для GUI, GDAL для чтения SXF |
-| Go-сервисы | Go; в [go.mod погодного сервера](server_golang_weather/go.mod) указана версия `1.27.3` |
+| Go-сервисы | Go; в `go.mod` [Map Server](server_golang/go.mod) и [Weather Server](server_golang_weather/go.mod) указана версия `1.27.3` |
+| Map Server в контейнере | Docker с Compose; два файла карт в формате MBTiles |
 | Дополнительные проверки | `clang-format`, `cppcheck`, `gcovr` или `lcov`/`genhtml` — в зависимости от Makefile |
 
 Терминальные приложения ориентированы на macOS/Linux. Для внешних C/C++ библиотек нужны заголовки и библиотеки, доступные компилятору и линковщику.
@@ -48,6 +50,45 @@
 ## Быстрый старт
 
 Команды ниже выполняются **из корня репозитория**. Команды в скобках меняют рабочую папку только на время запуска.
+
+### Map Server
+
+Сервер читает картографические тайлы из SQLite-контейнеров MBTiles. Перед запуском положите базы карт в каталог `server_golang/maps/`:
+
+```text
+server_golang/maps/russia_raster_z0_z6.mbtiles
+server_golang/maps/russia_raster_z5_z12.mbtiles
+```
+
+Запуск на хосте:
+
+```sh
+(cd server_golang && go run .)
+```
+
+Или в Docker Compose:
+
+```sh
+docker compose -f server_golang/compose.yaml up --build
+```
+
+Примеры запросов:
+
+```sh
+curl http://localhost:8080/health
+curl http://localhost:8080/metadata
+curl --output tile.png http://localhost:8080/tiles/3/4/2.png
+```
+
+| Запрос | Результат |
+| --- | --- |
+| `GET /health` | `200 OK`, тело `OK` |
+| `GET /metadata` | Метаданные обеих MBTiles-баз в JSON |
+| `GET /tiles/{z}/{x}/{y}.png` | PNG-тайл в XYZ-координатах для масштабов `0`–`12` |
+| Неверные координаты | `400 Bad Request` |
+| Неподдерживаемый масштаб или отсутствующий тайл | `404 Not Found` |
+
+Пути к базам можно переопределить переменными `MBTILES_LOW_PATH` и `MBTILES_HIGH_PATH`. При остановке по `Ctrl+C`, `SIGINT` или `SIGTERM` сервер даёт активным запросам до 8 секунд на завершение.
 
 ### Weather Server
 
@@ -95,7 +136,7 @@ curl -X POST http://localhost:8080/enqueue \
 
 Сейчас обработка задачи имитируется задержкой и случайным успехом или ошибкой. Состояния хранятся в памяти, результаты выполнения выводятся в лог. Подробности — в [README очереди](Golang_queue_with_workers/README.md).
 
-Оба Go-сервиса используют порт `8080`: запускайте их по очереди. Остановка — `Ctrl+C`.
+Все три Go-сервиса используют порт `8080`: запускайте их по очереди. Остановка — `Ctrl+C`.
 
 ### AviWx — погода и маршрут
 
@@ -204,6 +245,7 @@ cc -std=gnu11 P03D20-1-develop/src/main.c P03D20-1-develop/src/graph.c -lm -o bu
 
 | Проекты | Где находятся проверки | Запуск |
 | --- | --- | --- |
+| Map Server | `main_test.go`, пакет `testing`, временные SQLite-базы | `go test ./...` из `server_golang/` |
 | s21_string, s21_decimal, s21_matrix | `src/tests/`, библиотека Check | `make test` из соответствующего `src/` |
 | s21_matrixplus | `src/tests/`, GoogleTest | `make test` из `src/` |
 | Tetris | `src/test/`, библиотека Check | `make test` из `src/` |
@@ -218,8 +260,14 @@ make -C weather_prog test BUILD_DIR=build/debug BUILD_TYPE=Debug
 
 В Makefile библиотек и Тетриса предусмотрена цель `gcov_report`. Она требует дополнительных инструментов покрытия; состав отчёта зависит от конкретного проекта. Цели форматирования также различаются: часть из них меняет исходные файлы.
 
-У Go-сервисов, 3D Cube, Pong, Game of Life и Graph отдельных автоматических тестов в текущем дереве нет.
+У Weather Server, очереди задач, 3D Cube, Pong, Game of Life и Graph отдельных автоматических тестов в текущем дереве нет.
+
+В `benchmark_test.go` Map Server есть последовательные и параллельные HTTP-бенчмарки. Они требуют реальные MBTiles-базы и запускаются командой:
+
+```sh
+(cd server_golang && go test -bench=. -benchmem)
+```
 
 ---
 
-Состав проектов и команды сверены с исходниками и конфигурацией сборки 23 октября 2026 года.
+Состав проектов и команды сверены с исходниками и конфигурацией сборки 26 октября 2026 года.

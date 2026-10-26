@@ -1,0 +1,45 @@
+
+# ==============================
+# GO Map Server
+# ==============================
+
+# Картографические базы
+maps/
+*.mbtiles
+
+# Результаты профилирования
+*.prof
+*.pprof
+*.trace
+
+# Скомпилированные Go-файлы
+/my-server
+/my-server.test
+*.test
+*.exe
+*.out
+
+# Отчёты о покрытии тестами
+coverage.out
+*.coverprofile
+
+# Логи
+*.log
+
+# Локальные переменные окружения
+.env
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# IDE
+.idea/
+.vscode/
+
+# Временные файлы
+*.tmp
+*.swp
+*~
