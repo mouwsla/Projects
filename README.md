@@ -1,6 +1,6 @@
 # C, C++ и Go — коллекция проектов
 
-14 самостоятельных проектов: библиотеки на C и C++, терминальные игры, визуализация, HTTP-сервисы на Go и погодное приложение с картой на Qt.
+16 самостоятельных проектов: библиотеки на C и C++, терминальные игры, астрофизическая визуализация, HTTP-сервисы на Go, асинхронная очередь RabbitMQ и погодное приложение с картой на Qt.
 
 В репозитории собраны учебные задания и собственные эксперименты с памятью, алгоритмами, конкурентностью, сетевыми запросами и графическими интерфейсами. У каждого проекта свои исходники и способ сборки.
 
@@ -11,8 +11,10 @@
 | Проект | Что внутри | Стек |
 | --- | --- | --- |
 | [Map Server](server_golang/) | HTTP-сервер PNG-тайлов из двух MBTiles-баз, метаданные карт и graceful shutdown | Go, `net/http`, SQLite, Docker |
+| [Go Task Queue](server_go_redis_rabbit/) | HTTP API и worker: статусы задач в Redis, доставка через RabbitMQ, отложенные повторы и dead-letter queue | Go, Redis, RabbitMQ, Docker Compose, Caddy |
 | [Weather Server](server_golang_weather/) | HTTP API: поиск города и текущая температура, влажность, ветер и давление через Open-Meteo | Go, `net/http`, JSON |
 | [Очередь задач](Golang_queue_with_workers/) | Буферизированная очередь, пул воркеров, повторные попытки с задержкой и случайным разбросом | Go, goroutines, channels, `sync` |
+| [Astrophysics Simulator](AstrophysicsSimulator/) | Интерактивные модели Млечного Пути, чёрной дыры, галактического центра и гравитационной физики | C++20, Qt6, OpenGL, CMake |
 | [AviWx](weather_prog/) | Анализ погодных рисков по сценарию маршрута, Qt-интерфейс, прогноз Open-Meteo и SXF-карты | C++20, CMake, Qt6, GDAL |
 | [3D Cube](3D_Cube/) | Вращающийся ASCII-куб с перспективой, освещением, цветами и ручным управлением | C++17, POSIX terminal |
 | [s21_string](C2_s21_stringplus-1-develop/src/) | Собственные функции работы со строками и памятью, часть возможностей `sprintf`, вставка и обрезка строк | C11, Check |
@@ -35,14 +37,16 @@
 | --- | --- |
 | C/C++ проекты | GCC или Clang; `make` для проектов с Makefile |
 | 3D Cube | Компилятор C++17 и терминал с POSIX API |
-| s21_matrixplus и AviWx | Компилятор C++20 |
+| s21_matrixplus, Astrophysics Simulator и AviWx | Компилятор C++20 |
 | Pong, Game of Life, Tetris | ncurses; Makefile Тетриса также линкует Check при обычной сборке |
 | Тесты библиотек на C | Check; в Linux Makefile также используют Subunit и системные библиотеки |
 | Тесты s21_matrixplus | GoogleTest |
+| Astrophysics Simulator | CMake 3.20+, Qt 6.4+ с Widgets/OpenGL/OpenGLWidgets, GPU с OpenGL 3.3+; Qt не нужен для тестов математического ядра |
 | AviWx: консоль и тесты | CMake 3.20+; при сборке через Makefile — `make` |
 | AviWx: интерфейс и SXF-карты | Qt6 Widgets + Network для GUI, GDAL для чтения SXF |
-| Go-сервисы | Go; в `go.mod` [Map Server](server_golang/go.mod) и [Weather Server](server_golang_weather/go.mod) указана версия `1.27.3` |
+| Go-сервисы | Go; в `go.mod` [Map Server](server_golang/go.mod), [Go Task Queue](server_go_redis_rabbit/go.mod) и [Weather Server](server_golang_weather/go.mod) указана версия `1.27.3` |
 | Map Server в контейнере | Docker с Compose; два файла карт в формате MBTiles |
+| Go Task Queue в контейнере | Docker с Compose; образы Redis, RabbitMQ Management и Caddy загружаются при первой сборке |
 | Дополнительные проверки | `clang-format`, `cppcheck`, `gcovr` или `lcov`/`genhtml` — в зависимости от Makefile |
 
 Терминальные приложения ориентированы на macOS/Linux. Для внешних C/C++ библиотек нужны заголовки и библиотеки, доступные компилятору и линковщику.
@@ -115,6 +119,40 @@ curl --get --data-urlencode 'city=Москва' http://localhost:8080/weather
 
 Для получения погоды нужен доступ к Open-Meteo. Таймаут каждого исходящего HTTP-запроса — 10 секунд.
 
+### Go Task Queue — Redis и RabbitMQ
+
+Сервис принимает задачу через HTTP, публикует её в RabbitMQ и хранит состояние в Redis. Worker подтверждает сообщения вручную, повторяет неудачную обработку через retry-очередь и после исчерпания попыток отправляет сообщение в DLQ.
+
+Подготовка локального файла настроек и запуск всего стека:
+
+```sh
+cp server_go_redis_rabbit/.env.example server_go_redis_rabbit/.env
+docker compose \
+  -f server_go_redis_rabbit/compose.yaml \
+  --env-file server_go_redis_rabbit/.env \
+  up --build
+```
+
+Проверка API и создание успешной задачи:
+
+```sh
+curl http://localhost/health
+curl -sS \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"email","email":"user@example.com"}' \
+  http://localhost/tasks
+```
+
+API доступен на `http://localhost`, RabbitMQ Management UI — на `http://localhost:15672`. Логин и пароль берутся из локального `.env`; файл не попадает в Git. Тип задачи `fail` демонстрирует повторные попытки и переход в очередь `tasks.dead`.
+
+Нагрузочный сценарий после запуска контейнеров:
+
+```sh
+(cd server_go_redis_rabbit && python3 task_test.py --count 100 --parallel 20)
+```
+
+Подробное описание API, статусов и диагностики — в [README Go Task Queue](server_go_redis_rabbit/README.md).
+
 ### Очередь задач с воркерами
 
 У проекта пока нет `go.mod`, поэтому он запускается непосредственно через файл:
@@ -136,7 +174,41 @@ curl -X POST http://localhost:8080/enqueue \
 
 Сейчас обработка задачи имитируется задержкой и случайным успехом или ошибкой. Состояния хранятся в памяти, результаты выполнения выводятся в лог. Подробности — в [README очереди](Golang_queue_with_workers/README.md).
 
-Все три Go-сервиса используют порт `8080`: запускайте их по очереди. Остановка — `Ctrl+C`.
+Map Server, Weather Server и очередь в памяти используют порт `8080`, поэтому запускайте их по очереди. Go Task Queue публикуется через Caddy на порту `80`. Остановка процессов — `Ctrl+C`, Docker Compose — `docker compose down` с тем же `-f`.
+
+### Astrophysics Simulator
+
+На macOS скрипт автоматически находит Qt из Homebrew, собирает Release-конфигурацию, запускает тесты и открывает приложение:
+
+```sh
+(cd AstrophysicsSimulator && ./build_macos.sh)
+```
+
+Перед первым запуском установите инструменты сборки:
+
+```sh
+xcode-select --install
+brew install cmake qt
+```
+
+На Linux и Windows проект собирается обычными командами CMake с путём к установленному Qt 6:
+
+```sh
+cmake -S AstrophysicsSimulator -B AstrophysicsSimulator/build \
+  -DCMAKE_PREFIX_PATH="/путь/к/Qt/6.x/компилятор"
+cmake --build AstrophysicsSimulator/build --config Release -j 4
+```
+
+Математические тесты не требуют Qt:
+
+```sh
+cmake -S AstrophysicsSimulator -B AstrophysicsSimulator/build-headless \
+  -DASTRO_BUILD_GUI=OFF
+cmake --build AstrophysicsSimulator/build-headless
+ctest --test-dir AstrophysicsSimulator/build-headless --output-on-failure
+```
+
+Описание четырёх режимов, управления и ограничений модели находится в [README Astrophysics Simulator](AstrophysicsSimulator/README.md).
 
 ### AviWx — погода и маршрут
 
@@ -246,6 +318,8 @@ cc -std=gnu11 P03D20-1-develop/src/main.c P03D20-1-develop/src/graph.c -lm -o bu
 | Проекты | Где находятся проверки | Запуск |
 | --- | --- | --- |
 | Map Server | `main_test.go`, пакет `testing`, временные SQLite-базы | `go test ./...` из `server_golang/` |
+| Go Task Queue | Компиляция всех Go-пакетов, `go vet`, Python-сценарии API | `go test ./... && go vet ./...` из `server_go_redis_rabbit/`; интеграционно — `python3 task_test.py` при запущенном Compose |
+| Astrophysics Simulator | `tests/physics_test.cpp`, CTest без зависимости от Qt | Headless-команды из раздела быстрого старта |
 | s21_string, s21_decimal, s21_matrix | `src/tests/`, библиотека Check | `make test` из соответствующего `src/` |
 | s21_matrixplus | `src/tests/`, GoogleTest | `make test` из `src/` |
 | Tetris | `src/test/`, библиотека Check | `make test` из `src/` |
@@ -260,7 +334,7 @@ make -C weather_prog test BUILD_DIR=build/debug BUILD_TYPE=Debug
 
 В Makefile библиотек и Тетриса предусмотрена цель `gcov_report`. Она требует дополнительных инструментов покрытия; состав отчёта зависит от конкретного проекта. Цели форматирования также различаются: часть из них меняет исходные файлы.
 
-У Weather Server, очереди задач, 3D Cube, Pong, Game of Life и Graph отдельных автоматических тестов в текущем дереве нет.
+У Weather Server, очереди задач в памяти, 3D Cube, Pong, Game of Life и Graph отдельных автоматических тестов в текущем дереве нет.
 
 В `benchmark_test.go` Map Server есть последовательные и параллельные HTTP-бенчмарки. Они требуют реальные MBTiles-базы и запускаются командой:
 
@@ -270,4 +344,4 @@ make -C weather_prog test BUILD_DIR=build/debug BUILD_TYPE=Debug
 
 ---
 
-Состав проектов и команды сверены с исходниками и конфигурацией сборки 26 октября 2026 года.
+Состав проектов и команды сверены с исходниками и конфигурацией сборки 13 ноября 2026 года.

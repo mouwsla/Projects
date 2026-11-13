@@ -1,0 +1,108 @@
+
+# =========================
+# Git
+# =========================
+
+.git
+.gitignore
+.gitattributes
+
+# =========================
+# Environment / Secrets
+# =========================
+
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# =========================
+# Go build artifacts
+# =========================
+
+bin/
+tmp/
+dist/
+build/
+
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+coverage/
+coverage.txt
+coverage.html
+coverage.out
+cpu.prof
+mem.prof
+
+# =========================
+# Python
+# =========================
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# =========================
+# Docker local data
+# =========================
+
+data/
+volumes/
+redis-data/
+rabbitmq-data/
+
+*.tar
+*.tar.gz
+*.tgz
+
+# =========================
+# Logs
+# =========================
+
+*.log
+logs/
+
+# =========================
+# macOS
+# =========================
+
+.DS_Store
+._*
+.AppleDouble
+
+# =========================
+# Editors
+# =========================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# Temporary files
+# =========================
+
+.cache/
+*.tmp
+*.bak
+*.backup
+
+# =========================
+# Documentation
+# =========================
+
+README.md
+docs/

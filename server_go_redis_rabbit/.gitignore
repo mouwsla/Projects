@@ -1,0 +1,96 @@
+
+# =========================
+# Environment / Secrets
+# =========================
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.p12
+*.pfx
+
+# =========================
+# Go
+# =========================
+
+/bin/
+/tmp/
+/dist/
+/build/
+
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+coverage/
+coverage.txt
+coverage.html
+coverage.out
+cpu.prof
+mem.prof
+
+# =========================
+# Python (test scripts)
+# =========================
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# =========================
+# Docker / Local Data
+# =========================
+
+/data/
+/volumes/
+/redis-data/
+/rabbitmq-data/
+
+*.tar
+*.tar.gz
+*.tgz
+
+# =========================
+# Logs
+# =========================
+
+*.log
+/logs/
+
+# =========================
+# macOS
+# =========================
+
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# =========================
+# Editors
+# =========================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# Temporary files
+# =========================
+
+.cache/
+*.tmp
+*.bak
+*.backup

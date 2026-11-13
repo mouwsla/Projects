@@ -1,0 +1,45 @@
+# CMake build trees and generated files
+/build/
+/build-*/
+/cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+Testing/
+cmake_install.cmake
+compile_commands.json
+install_manifest.txt
+
+# Compiled artifacts
+*.a
+*.app/
+*.dSYM/
+*.dll
+*.dylib
+*.exe
+*.o
+*.obj
+*.so
+
+# Local CMake and IDE settings
+CMakeUserPresets.json
+.cache/
+.clangd/
+.idea/
+.vscode/
+*.user
+*.swp
+*.swo
+*~
+
+# Coverage, profiling and sanitizer output
+coverage/
+*.gcda
+*.gcno
+*.profraw
+*.profdata
+
+# OS metadata
+.DS_Store
+._*
+Thumbs.db
